@@ -56,10 +56,24 @@ if(GLSLC)
     file(GLOB SHADERS ${SHADER_DIR}/*.glsl)
     foreach(SHADER ${SHADERS})
         get_filename_component(FILE_NAME ${SHADER} NAME)
+
+        # Extract shader stage from filename (e.g. cull.comp.glsl -> comp)
+        string(REGEX REPLACE "^[^.]+\\.([^.]+)\\.glsl$" "\\1" STAGE ${FILE_NAME})
+
+        if(STAGE STREQUAL "vert")
+            set(GLSL_STAGE vertex)
+        elseif(STAGE STREQUAL "frag")
+            set(GLSL_STAGE fragment)
+        elseif(STAGE STREQUAL "comp")
+            set(GLSL_STAGE compute)
+        else()
+            message(FATAL_ERROR "Unknown shader stage: ${STAGE} for ${FILE_NAME}")
+        endif()
+
         set(SPIRV_FILE ${SPIRV_DIR}/${FILE_NAME}.spv)
         add_custom_command(
             OUTPUT ${SPIRV_FILE}
-            COMMAND ${GLSLC} -std=450 ${SHADER} -o ${SPIRV_FILE}
+            COMMAND ${GLSLC} -std=450 -fshader-stage=${GLSL_STAGE} ${SHADER} -o ${SPIRV_FILE}
             DEPENDS ${SHADER}
             COMMENT "Compiling ${FILE_NAME}"
         )
