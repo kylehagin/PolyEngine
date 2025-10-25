@@ -31,6 +31,15 @@ set(SYNTY_LITE_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src
 )
 
+if(MSVC)
+    # Ensure the CRT exposes C99 float math symbols like powf/remainderf that
+    # meshoptimizer and other translation units include via <cmath> when
+    # building with MSVC. Setting this at directory scope applies to all
+    # targets defined below (including meshoptimizer and synty-lite) so they
+    # see the same declarations.
+    add_compile_definitions(_CRT_DECLARE_NONSTDC_NAMES=1)
+endif()
+
 add_subdirectory(${EXTERNAL_DIR}/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(${EXTERNAL_DIR}/volk EXCLUDE_FROM_ALL)
 add_subdirectory(${EXTERNAL_DIR}/meshoptimizer EXCLUDE_FROM_ALL)
