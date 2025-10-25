@@ -49,6 +49,28 @@ cmake --build .
 
 If `glslc` is present it will be used at build time to compile shaders; otherwise the GLSL files are copied and compiled at runtime.
 
+#### Windows quick start
+
+1. Install the **Vulkan SDK** (adds the `VULKAN_SDK` environment variable that CMake and Volk use).
+2. Install **Visual Studio 2022** (or the Build Tools) with the *Desktop development with C++* workload.
+3. Open a **x64 Native Tools Command Prompt for VS 2022** so the toolchain is on `PATH`.
+4. From the repo root run the dependency script:
+
+   ```bat
+   scripts\setup_deps.bat
+   ```
+
+5. Configure and build with CMake:
+
+   ```bat
+   cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+   cmake --build build --config Release
+   ```
+
+   (Use `--config Debug` when you need debug symbols.)
+
+The generated solution lives in `build/synty-lite.sln` if you prefer to build from within Visual Studio.
+
 ### 3. Run
 
 ```
