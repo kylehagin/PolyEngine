@@ -77,6 +77,15 @@ else()
     target_compile_definitions(synty-lite PRIVATE VK_USE_PLATFORM_XCB_KHR)
 endif()
 
+if(MSVC)
+    # Ensure MSVC exposes C99 float math symbols like powf/remainderf when
+    # compiling our sources. While directory-level add_compile_definitions
+    # should apply this symbol, explicitly attaching it to the synty-lite
+    # target guarantees vk_context.cpp (and other TU's) always see the same
+    # declaration configuration regardless of generator quirks.
+    target_compile_definitions(synty-lite PRIVATE _CRT_DECLARE_NONSTDC_NAMES=1)
+endif()
+
 target_compile_definitions(synty-lite PRIVATE VOLK_STATIC_DEFINE)
 
 # Shader compilation
