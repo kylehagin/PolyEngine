@@ -10,12 +10,21 @@ set(EXTERNAL_DIR ${CMAKE_SOURCE_DIR}/external)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+# Configure third-party builds
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+if(NOT WIN32)
+    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+endif()
+
 # Include directories for dependencies
-include_directories(
+set(SYNTY_LITE_INCLUDE_DIRS
     ${EXTERNAL_DIR}/glfw/include
     ${EXTERNAL_DIR}/volk
     ${EXTERNAL_DIR}/glm
-    ${EXTERNAL_DIR}/vma
+    ${EXTERNAL_DIR}/vma/include
     ${EXTERNAL_DIR}/assimp/include
     ${EXTERNAL_DIR}/meshoptimizer/src
     ${EXTERNAL_DIR}/stb
@@ -26,6 +35,12 @@ add_subdirectory(${EXTERNAL_DIR}/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(${EXTERNAL_DIR}/volk EXCLUDE_FROM_ALL)
 add_subdirectory(${EXTERNAL_DIR}/meshoptimizer EXCLUDE_FROM_ALL)
 
+if(MSVC)
+    # Ensure the CRT exposes C99 float math symbols like powf/remainderf that
+    # meshoptimizer relies on when building with MSVC.
+    target_compile_definitions(meshoptimizer PRIVATE _CRT_DECLARE_NONSTDC_NAMES=1)
+endif()
+
 # stb, glm, vma, assimp provide headers only or own projects
 find_package(Vulkan REQUIRED)
 
@@ -35,6 +50,8 @@ file(GLOB SRC_FILES
 
 add_executable(synty-lite ${SRC_FILES})
 
+target_include_directories(synty-lite PRIVATE ${SYNTY_LITE_INCLUDE_DIRS})
+
 target_link_libraries(synty-lite
     PRIVATE
         glfw
@@ -43,7 +60,15 @@ target_link_libraries(synty-lite
         ${Vulkan_LIBRARIES}
 )
 
-target_compile_definitions(synty-lite PRIVATE VK_USE_PLATFORM_WIN32_KHR=1)
+if(WIN32)
+    target_compile_definitions(synty-lite PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+elseif(APPLE)
+    target_compile_definitions(synty-lite PRIVATE VK_USE_PLATFORM_MACOS_MVK)
+else()
+    target_compile_definitions(synty-lite PRIVATE VK_USE_PLATFORM_XCB_KHR)
+endif()
+
+target_compile_definitions(synty-lite PRIVATE VOLK_STATIC_DEFINE)
 
 # Shader compilation
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
